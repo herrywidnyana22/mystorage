@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+python-dotenv
+pydantic[email]
+bcrypt
+pyjwt
+python-multipart
+requests
+httpx
+psycopg[binary]
+aiofiles
+sendgrid
