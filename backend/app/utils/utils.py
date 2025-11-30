@@ -4,7 +4,7 @@ load_dotenv()
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-JWT_SECRET = os.getenv("JWT_SECRET", "change_this")
+JWT_SECRET = os.getenv("JWT_SECRET", "3583673n375b80b653t7535v83t68v3b68v3b68v3b68v3b")
 JWT_ALGO = os.getenv("JWT_ALGO", "HS256")
 JWT_EXPIRES_DAYS = int(os.getenv("JWT_EXPIRES_DAYS", "7"))
 

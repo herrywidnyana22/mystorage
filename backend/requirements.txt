@@ -8,6 +8,6 @@ pyjwt
 python-multipart
 requests
 httpx
-psycopg[binary]
+psycopg2-binary
 aiofiles
 sendgrid

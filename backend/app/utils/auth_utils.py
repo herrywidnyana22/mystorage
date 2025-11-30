@@ -1,54 +1,35 @@
-from fastapi import Request
+# app/utils/auth_utils.py
+from fastapi import Request, HTTPException, Depends
 from sqlmodel import Session, select
+from typing import Tuple, Optional
 import datetime
 
-from ..models import User, SessionModel
-from .response import success, error
+from ..db import get_session
+from ..models import SessionModel, User
+from .response import error
 
-
-def authorize(request: Request, db: Session):
-    """
-    Validate cookie session and return (user, None) if OK.
-    Otherwise return (None, error_response)
-    """
-
-    # ambil cookie
+def get_user_from_cookie(request: Request, db: Session) -> Tuple[Optional[User], Optional[dict]]:
     token = request.cookies.get("session")
     if not token:
-        return None, error(
-            message="Not authenticated",
-            code=401,
-            err={"code": "AUTH_REQUIRED"}
-        )
+        return None, error("Not authenticated", 401, {"code": "AUTH_REQUIRED"})
 
-    # cek session valid
-    sess = db.exec(
-        select(SessionModel).where(SessionModel.token == token)
-    ).first()
+    sess = db.exec(select(SessionModel).where(SessionModel.id == token)).first()
 
     if not sess:
-        return None, error(
-            message="Invalid session",
-            code=401,
-            err={"code": "INVALID_SESSION"}
-        )
+        return None, error("Invalid session", 401, {"code": "INVALID_SESSION"})
 
-    # expired?
     if sess.expires_at < datetime.datetime.now(datetime.timezone.utc):
-        return None, error(
-            message="Session expired",
-            code=401,
-            err={"code": "SESSION_EXPIRED"}
-        )
+        return None, error("Session expired", 401, {"code": "SESSION_EXPIRED"})
 
-    # ambil user
     user = db.exec(select(User).where(User.id == sess.user_id)).first()
-
     if not user:
-        return None, error(
-            message="User not found",
-            code=404,
-            err={"code": "USER_NOT_FOUND"}
-        )
+        return None, error("User not found", 404, {"code": "USER_NOT_FOUND"})
 
     return user, None
+
+def require_auth(request: Request, db: Session = Depends(get_session)) -> User:
+    user, err = get_user_from_cookie(request, db)
+    if err:
+        # Raise HTTPException with the error dict in detail → frontend will receive consistent payload
+        raise HTTPException(status_code=err.get("code", 401), detail=err)
+    return user
